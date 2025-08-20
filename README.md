@@ -1,8 +1,6 @@
 # UPI_Project_H1_2025
 Data Analysis &amp; Dashboard on UPI Bank Transactions (H1 2025)
 
-# UPI Project H1 2025
-
 ## 📌 Overview
 This project analyzes UPI (Unified Payments Interface) transactions in India for the first half of 2025.  
 Focus is on payment and receipt volumes, decline rates, and bank-wise performance.
