@@ -1,0 +1,25 @@
+-- Descriptive_analysis
+
+SELECT * FROM upi_payment pay
+INNER JOIN upi_receipt rec
+ON pay.bank_code = rec.bank_code
+AND pay.date_s = rec.date_s
+LIMIT 3;
+
+
+SELECT 
+   DENSE_RANK() OVER (ORDER BY SUM(pay.total_volume_mn) + SUM(rec.total_volume_mn) DESC) AS rank_s,
+   pay.bank_code,
+   pay.upi_bank_name, 
+   ROUND(SUM(pay.total_volume_mn) + SUM(rec.total_volume_mn)) total_volume,
+   CONCAT(ROUND((AVG(pay.total_approved_pct) + AVG(rec.total_approved_pct)) / 2 * 100),'%') AS avg_approval_pct,
+   CONCAT(ROUND((AVG(pay.total_decline_pct) + AVG(rec.total_decline_pct)) / 2 * 100),'%') AS avg_total_decline_pct,
+   CONCAT(ROUND((AVG(pay.bank_decline_pct) + AVG(rec.bank_decline_pct)) / 2 * 100),'%') AS avg_bank_decline_pct,
+   CONCAT(ROUND((AVG(pay.technical_decline_pct) + AVG(rec.technical_decline_pct)) / 2 * 100),'%') AS avg_technical_decline_pct
+FROM upi_payment pay
+INNER JOIN upi_receipt rec
+ON pay.bank_code = rec.bank_code
+AND pay.date_s = rec.date_s
+GROUP BY bank_code, upi_bank_name
+ORDER BY total_volume DESC
+LIMIT 10;

@@ -1,0 +1,124 @@
+-- Basic Quaries
+
+-- SELECT TABLE
+SELECT * FROM upi_payment;
+SELECT * FROM upi_receipt;
+
+-- SELECT SPECIFIC COLUMNS | SELECT FROM
+SELECT 
+   date_s,
+   month_s,
+   rank_code, 
+   bank_code, 
+   upi_bank_name 
+FROM upi_payment;
+
+-- SELECT UNIQUE ELEMENTS FROM COLUMNS | DISTINCT
+SELECT 
+   DISTINCT(upi_bank_name) 
+FROM upi_payment;
+
+-- SELECT NUMBER OF UNIQUE ELEMENTS| COUNT
+SELECT 
+   COUNT(DISTINCT(upi_bank_name)) 
+FROM upi_payment;
+
+-- SELECT MINIMUN AND MAXIMUM| MIN, MAX
+SELECT 
+   MIN(total_volume_mn),
+   MAX(total_volume_mn)
+FROM upi_payment;
+
+-- SELECT TABLE WITH GROUP AND ORDER | GROUP BY, ORDER BY
+SELECT
+   bank_code,
+   upi_bank_name, 
+   SUM(total_volume_mn) total_volume_mn
+FROM upi_payment
+GROUP BY bank_code, upi_bank_name
+ORDER BY total_volume_mn DESC;
+
+-- SELECT TABLE WITH AGGREGATIONS | SUM,AVG,ALIASES,CONCAT,ROUND
+SELECT
+   bank_code,
+   upi_bank_name, 
+   ROUND(SUM(total_volume_mn)) total_volume_mn,
+   CONCAT(ROUND(AVG(total_approved_pct) * 100), '%') AS total_app_pct,
+   CONCAT(ROUND(AVG(total_decline_pct) * 100), '%') AS total_dec_pct
+FROM upi_payment
+GROUP BY bank_code, upi_bank_name
+ORDER BY total_app_pct DESC;
+
+-- SELECT TABLE WITH CONDITION | WHERE
+SELECT
+   date_s,  
+   bank_code,
+   upi_bank_name, 
+   total_volume_mn,
+   total_approved_pct
+FROM upi_payment
+WHERE bank_code = 'B003'
+AND total_approved_pct > 0.93;
+
+-- SELECT WITH CONDITION | SUB QUERY, HAVING
+SELECT
+   bank_code,
+   upi_bank_name, 
+   ROUND(SUM(total_volume_mn)) total_volume_mn
+FROM upi_payment
+GROUP BY bank_code, upi_bank_name
+HAVING SUM(total_volume_mn) > (
+   SELECT AVG(total_volume_mn) FROM upi_payment
+)   
+ORDER BY total_volume_mn DESC;
+
+-- JOIN TABLE | INNER JOIN
+SELECT * FROM upi_payment p
+INNER JOIN upi_receipt r
+ON p.bank_code = r.bank_code
+AND p.date_s = r.date_s;
+
+-- SELECT TOTAL TRANSACTION FROM JOIN | GROUP, ORDER, ALIASES, AGGREGATION, JOIN
+SELECT 
+   p.bank_code, 
+   p.upi_bank_name, 
+   ROUND(SUM(p.total_volume_mn)) AS upi_pay_transfer, 
+   ROUND(SUM(r.total_volume_mn)) AS upi_rec_transfer,
+   ROUND(SUM(p.total_volume_mn)  + SUM(r.total_volume_mn)) AS total_volume 
+FROM upi_payment p
+INNER JOIN upi_receipt r
+ON p.bank_code = r.bank_code
+AND p.date_s = r.date_s
+GROUP BY  p.bank_code, p.upi_bank_name 
+ORDER BY total_volume DESC;
+
+-- SELECT TOTAL TRANSACTION WITH CONDITION  | HAVING
+SELECT 
+   p.bank_code, 
+   p.upi_bank_name, 
+   ROUND(SUM(p.total_volume_mn)  + SUM(r.total_volume_mn)) AS total_volume 
+FROM upi_payment p
+INNER JOIN upi_receipt r
+ON p.bank_code = r.bank_code
+AND p.date_s = r.date_s
+GROUP BY  p.bank_code, p.upi_bank_name 
+HAVING ROUND(SUM(p.total_volume_mn)  + SUM(r.total_volume_mn)) > 5000
+ORDER BY total_volume DESC;
+
+-- SELECT TABLE WITH CASE STATEMENT | CASE END
+SELECT 
+   p.bank_code, 
+   p.upi_bank_name,
+   ROUND(((AVG(p.total_approved_pct)  + AVG(r.total_approved_pct)) / 2) * 100) AS total_app_pct, 
+   ROUND(((AVG(p.total_decline_pct)  + AVG(r.total_decline_pct)) / 2) * 100) AS total_dec_pct,
+   CASE
+      WHEN ((AVG(p.total_approved_pct)  + AVG(r.total_approved_pct)) / 2 * 100) > 95 THEN 'TOP_PERFORMING'
+      WHEN ((AVG(p.total_approved_pct)  + AVG(r.total_approved_pct)) / 2 * 100) > 60 THEN 'GOOD_PERFORMING'
+      ELSE 'BAD_PERFORMING'
+   END AS approvel_perfomance   
+FROM upi_payment p
+INNER JOIN upi_receipt r
+ON p.bank_code = r.bank_code
+AND p.date_s = r.date_s
+GROUP BY  p.bank_code, p.upi_bank_name
+ORDER BY total_app_pct DESC;

@@ -1,0 +1,32 @@
+-- consolidated_table
+
+SELECT 
+   pay.date_s,
+   pay.month_s,
+   pay.bank_code,
+   pay.upi_bank_name, 
+   ROUND(SUM(pay.total_volume_mn)) pay_volume,
+   ROUND(SUM(rec.total_volume_mn)) rec_volume,
+   ROUND(SUM(pay.total_volume_mn) + SUM(rec.total_volume_mn)) total_volume,
+   
+   CONCAT(ROUND(AVG(pay.total_approved_pct) * 100 ),'%') pay_app_pct,
+   CONCAT(ROUND(AVG(rec.total_approved_pct) * 100 ),'%') rec_app_pct,
+   CONCAT(ROUND((AVG(pay.total_approved_pct) + AVG(rec.total_approved_pct)) / 2 * 100),'%') AS avg_approval_pct,
+   
+   CONCAT(ROUND(AVG(pay.total_decline_pct) * 100),'%') pay_decl_pct,
+   CONCAT(ROUND(AVG(rec.total_decline_pct) * 100),'%') rec_decl_pct,
+   CONCAT(ROUND((AVG(pay.total_decline_pct) + AVG(rec.total_decline_pct)) / 2 * 100),'%') AS avg_total_decline_pct,
+   
+   CONCAT(ROUND(AVG(pay.bank_decline_pct) * 100),'%') pay_bank_decl_pct,
+   CONCAT(ROUND(AVG(rec.bank_decline_pct) * 100),'%') rec_bank_decl_pct,
+   CONCAT(ROUND((AVG(pay.bank_decline_pct) + AVG(rec.bank_decline_pct)) / 2 * 100),'%') AS avg_bank_decline_pct,
+   
+   CONCAT(ROUND(AVG(pay.technical_decline_pct) * 100),'%') pay_tech_decl_pct,
+   CONCAT(ROUND(AVG(rec.technical_decline_pct) * 100),'%') rec_tech_decl_pct,
+   CONCAT(ROUND((AVG(pay.technical_decline_pct) + AVG(rec.technical_decline_pct)) / 2 * 100),'%') AS avg_technical_decline_pct
+FROM upi_payment pay
+INNER JOIN upi_receipt rec
+ON pay.bank_code = rec.bank_code
+AND pay.date_s = rec.date_s
+GROUP BY pay.date_s, pay.month_s, pay.bank_code, pay.upi_bank_name
+ORDER BY pay.date_s,total_volume DESC;
